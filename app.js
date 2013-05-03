@@ -14,11 +14,14 @@ app.get('/', function (req, res) {
 */
 var clients = [];
 
-var stocks = {
-	'AT&T': 35,
-	'APPLE': 450,
-	'GOOGLE': 850
-};
+var stocks = [
+	{ name: 'AT&T',
+	  price: 35 },
+	{ name: 'APPLE',
+	  price : 450 },
+	{ name: 'GOOGLE',
+	  price : 850 }
+];
 
 lorem_ipsum = "Lorem ipsum dolor sit amet consectetur adipiscing elit Maecenas egestas libero eu mauris blandit vitae imperdiet dolor lacinia Sed ac diam vel urna viverra ullamcorper Nulla enim tortor mollis at venenatis at porta dui ligula sollicitudin non mollis non tincidunt arcu Mauris volat sagittis lorem nec tincidunt Vestibulum ipsum massa Mauris sit amet purus sit amet est feugiat gravida vel sed Proin quam sem Sed laoreet massa mauris laoreet non rhoncus lit iaculis Duis non risus augue vitae sagittis metus Fusce sagittis imperdiet massa sit amet mattis Proin sed scelerisque orci Aliquam grav justo non lacus rum tincidunt Donec faucibus sollicitudin felis eu porttitor dui porttitor faucibus";
 lorem_ipsum_words = lorem_ipsum.split(" ");
@@ -61,9 +64,9 @@ io.sockets.on('connection', function (socket) {
 });
 
 setInterval(function() {
-	Object.keys(stocks).forEach(function(stock) {
-		stocks[stock] += Math.random()*stocks[stock]*0.02*(Math.random() < 0.5 ? -1 : 1);
-		stocks[stock] = Math.round(100*stocks[stock])/100;
+	stocks.forEach(function(stock) {
+		stock.price += Math.random()*stock.price*0.02*(Math.random() < 0.5 ? -1 : 1);
+		stock.price = Math.round(100*stock.price)/100;
 	});
   console.log(stocks)
   io.sockets.emit('stockUpdates', { stocks: stocks });	
