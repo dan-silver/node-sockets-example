@@ -1,0 +1,13 @@
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var socket = io.connect('http://localhost');
+  socket.on('stockUpdates', function (stocks) {
+    console.log(stocks);
+  });
+	socket.emit('join', function(successful, name, stocks) {
+		if (successful) {
+			console.log(name)
+			console.log(stocks)
+		}
+	});
+</script>
