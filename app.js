@@ -3,9 +3,9 @@ var app = require('express')()
   , io = require('socket.io').listen(server);
 
 server.listen(3000);
-
+app.set('view engine', 'hbs');
 app.get('/', function (req, res) {
-  res.sendfile(__dirname + '/client.html');
+  res.render('client.hbs');
 });
 
 /*
