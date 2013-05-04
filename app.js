@@ -22,7 +22,7 @@ io.configure(function () {
 });
 
 var clients = {};
-var startingCash = 1000;
+var startingCash = 2000;
 var stocks = {};
 stocks.AMAZON =  {price: 450, direction:1};
 stocks.APPLE =  {price: 750, direction:1};
