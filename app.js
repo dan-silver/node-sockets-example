@@ -16,7 +16,12 @@ app.get('/', function (req, res) {
 });
 app.use(express.static(path.join(__dirname, 'public')))
 
-var clients = [];
+io.configure(function () { 
+  io.set("transports", ["xhr-polling"]); 
+  io.set("polling duration", 10); 
+});
+
+var clients = {};
 var startingCash = 1000;
 var stocks = {};
 stocks.AMAZON =  {price: 450, direction:1};
@@ -42,25 +47,19 @@ function generateUserName() {
 }
 
 io.sockets.on('connection', function (socket) {
- 	/*
-        Handle requests to join the game
-        -------------------------------------
-    */
     socket.on('join', function(callback) {
     	name = generateUserName()
-            socket.set('cash', startingCash)
-            // Add the name to the global list
-            clients.push(name);
-
-            // Callback to the user with a successful flag and the list of clients
-            console.log('User %s has connected.', name)
-            callback(true, name, stocks);
+      socket.set('cash', startingCash)
+      // Add the name to the global list
+      clients[name] = startingCash;
+      socket.set('name', name);
+      console.log('User %s has connected.', name)
+      callback(true, name, stocks);
     });
     socket.on('purchase', function(info, callback) {
     	stockPrice = stocks[info.stock].price;
-    	console.log('looking up cash...')
     	socket.get('cash', function(err, cash) {
-    		if (cash >= stockPrice) {
+    		if (cash >= stockPrice) { //example of serverside verification
     			socket.set('cash', cash-stockPrice, function() {
     				callback(stockPrice);
     			});
@@ -69,12 +68,24 @@ io.sockets.on('connection', function (socket) {
     		}
     	});
     });
+    socket.on('status', function(info) {
+      Object.keys(clients).forEach(function(client) {
+        if (client == info.name) {
+          clients[client] = info.total;
+        }
+      })
+    });
+    socket.on('disconnect', function() {
+      socket.get('name', function(err, name) {
+        delete clients[name];
+      })
+    })
 });
 
 setInterval(function() {
 	Object.keys(stocks).forEach(function(stock) {
 		oldPrice = stocks[stock].price;
-		stocks[stock].price += Math.random()*stocks[stock].price*0.02*(Math.random() < 0.5 ? -1 : 1);
+		stocks[stock].price += Math.random()*oldPrice*0.02*(Math.random() < 0.5 ? -1 : 1);
 		stocks[stock].price = Math.round(100*stocks[stock].price)/100;
 		if (stocks[stock].price > oldPrice) {
 			stocks[stock].direction = 1;
@@ -82,5 +93,6 @@ setInterval(function() {
 			stocks[stock].direction = -1;
 		}
 	});
-  io.sockets.emit('stockUpdates', { stocks: stocks });	
+  io.sockets.emit('stockUpdates', { stocks: stocks, clients: clients });
+  console.log(clients)
 }, 1000)
