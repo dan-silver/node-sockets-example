@@ -5,13 +5,17 @@
 	<link rel="stylesheet" href="/css/bootstrap.min.css"></style>
 <script>
   var socket = io.connect('http://localhost');
-  socket.on('purchase', function(res) {
-    $('#purchases').append('<tr><td>'+res.stock.name+'</td></tr>');
-  });
   $(function() {
     $('.purchase').click(function() {
-      socket.emit('purchase', {stock: $(this).parent().parent().attr("id")}, function(res){
-        console.log(res);
+      name = $(this).parent().parent().attr("id")
+      socket.emit('purchase', {stock: name}, function(res) {
+        if (res != false) {
+        	$('#purchases').append('<tr class="purchase" id="'+name+'"><td>'+name+'</td><td>$<span="originalPrice">'+res+'</span></td><td>$<span class="price">Waiting...</span></td></tr>');
+        	$('#cash').text(Math.round(($('#cash').text() - res)*10)/10);
+    	} else {
+    		alert("You don't have enough money.")
+    	}
+    	$
       })
     })
   })
@@ -26,6 +30,13 @@
         $('#'+stock+" .info").css("color", "red");
       }
     })
+  	total = Number($('#cash').html());
+   	$('tr.purchase').each(function() {
+  	  total += $(this).find(".price").text() - $(this).find(".originalPrice").text()
+  	  console.log(total)
+    })
+    total = Math.round(total*10)/10;
+    $('#total').text(total)
   });
 	socket.emit('join', function(successful, name, stocks) {
 		if (successful) {
@@ -76,12 +87,15 @@
 				<h2>My Portfolio</h2>
 				<table class="table table-hover" id="purchases">
 					<tr>
-						<td>Stock</td>	
-						<td>Shared</td>	
-						<td>Value</td>	
-						<td>Action</td>	
+						<th>Stock</th>
+						<th>Value when Purchased</th>
+						<th>Current Value</th>
 					</tr>
 				</table>
+				<div>
+					<strong>Cash: $<span id="cash">{{startingCash}}</span></strong><br>
+					<strong>Total: $<span id="total"></span></strong>
+				</div>
 			</div>
 		</div>
 	</div>

@@ -12,16 +12,12 @@ app.get('/', function (req, res) {
   Object.keys(stocks).forEach(function(stock) {
     sendStocks.push({name: stock, price: stocks[stock].price})
   })
-  res.render('client.hbs', {stocks: sendStocks});
+  res.render('client.hbs', {stocks: sendStocks, startingCash: startingCash});
 });
 app.use(express.static(path.join(__dirname, 'public')))
 
-/*
-    Keep a global list of currently connected clients
-    -----------------------------------------------
-*/
 var clients = [];
-
+var startingCash = 1000;
 var stocks = {};
 stocks.AMAZON =  {price: 450, direction:1};
 stocks.APPLE =  {price: 750, direction:1};
@@ -52,6 +48,7 @@ io.sockets.on('connection', function (socket) {
     */
     socket.on('join', function(callback) {
     	name = generateUserName()
+            socket.set('cash', startingCash)
             // Add the name to the global list
             clients.push(name);
 
@@ -60,7 +57,17 @@ io.sockets.on('connection', function (socket) {
             callback(true, name, stocks);
     });
     socket.on('purchase', function(info, callback) {
-    	console.log(getStockPrice(info.stock))
+    	stockPrice = stocks[info.stock].price;
+    	console.log('looking up cash...')
+    	socket.get('cash', function(err, cash) {
+    		if (cash >= stockPrice) {
+    			socket.set('cash', cash-stockPrice, function() {
+    				callback(stockPrice);
+    			});
+    		} else {
+    			callback(false);
+    		}
+    	});
     });
 });
 
