@@ -5,11 +5,27 @@
 	<link rel="stylesheet" href="/css/bootstrap.min.css"></style>
 <script>
   var socket = io.connect('http://localhost');
+  socket.on('purchase', function(res) {
+    $('#purchases').append('<tr><td>'+res.stock.name+'</td></tr>');
+  });
+  $(function() {
+    $('.purchase').click(function() {
+      socket.emit('purchase', {stock: $(this).parent().parent().attr("id")}, function(res){
+        console.log(res);
+      })
+    })
+  })
   socket.on('stockUpdates', function (res) {
     $('#stocks').empty()
-    res.stocks.forEach(function(stock) {
-      $('#'+stock.name+" .price").html(stock.price)
-	})
+    stocks = res.stocks
+    Object.keys(stocks).forEach(function(stock) {
+      $('#'+stock+" .price").html(stocks[stock].price)
+      if (stocks[stock].direction=="1") {
+        $('#'+stock+" .info").css("color", "green");
+      } else {
+        $('#'+stock+" .info").css("color", "red");
+      }
+    })
   });
 	socket.emit('join', function(successful, name, stocks) {
 		if (successful) {
@@ -44,13 +60,28 @@
 							<div id="{{name}}" class="thumbnail">
 								<div class="caption">
 									<h3>{{name}}</h3>
-									$<span class="price">{{price}}</span><br>
-									<button class="btn btn-primary">Purchase</button>
+									<span class="info">
+										$<span class="price">{{price}}</span><br>
+									</span>
+									<button class="btn btn-primary purchase">Purchase</button>
 								</div>
 							</div>
 						</li>
 					{{/stocks}}
 				</ul>
+			</div>
+		</div>
+		<div class="row">
+			<div class="span12">
+				<h2>My Portfolio</h2>
+				<table class="table table-hover" id="purchases">
+					<tr>
+						<td>Stock</td>	
+						<td>Shared</td>	
+						<td>Value</td>	
+						<td>Action</td>	
+					</tr>
+				</table>
 			</div>
 		</div>
 	</div>
